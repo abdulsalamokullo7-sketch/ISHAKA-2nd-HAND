@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Shop: real accounts (email/password, Google, etc.). Anonymous has no email.
+    // (Avoid request.auth.token.firebase.sign_in_provider — it can deny valid sessions in some setups.)
+    function isShopAccount() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email != '';
+    }
+
+    match /items/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isShopAccount();
+    }
+
+    match /sellRequests/{reqId} {
+      // Anyone signed in (including anonymous) can submit a sell request.
+      allow create: if request.auth != null;
+      allow read, update, delete: if isShopAccount();
+    }
+
+    // Optional: store { role: "admin" } if you prefer UID checks later.
+    match /admins/{uid} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,10 @@
+rules_version = '2';
+// Product images are stored on Cloudflare R2, not Firebase Storage.
+// You can disable the Storage API in Firebase Console or leave this locked down.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
