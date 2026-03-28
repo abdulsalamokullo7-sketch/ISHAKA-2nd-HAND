@@ -1,4 +1,7 @@
-export const APP_NAME = "Ishaka Second-Hand Market";
+/** All caps + title case for header; full string for metadata & copy. */
+export const APP_BRAND_MARKET = "ISHAKA MARKET";
+export const APP_BRAND_SECOND_HAND = "Second Hand";
+export const APP_NAME = `${APP_BRAND_MARKET} ${APP_BRAND_SECOND_HAND}`;
 
 export const REGIONS = [
   { id: "kiu", label: "KIU Ishaka" },

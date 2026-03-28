@@ -79,25 +79,15 @@ export function SellRequestsPanel() {
             key={r.id}
             className="rounded-3xl border border-isha-border bg-white p-5 shadow-sm"
           >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-isha-text">{r.itemName}</p>
-                <p className="text-sm text-gray-600">
-                  Expected {formatUGX(r.expectedPrice)} · {r.condition}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Status:{" "}
-                  <span className="font-medium text-isha-text">{r.status}</span>
-                </p>
-              </div>
-              <a
-                href={wa}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full bg-isha-blue/10 px-3 py-1 text-xs font-semibold text-isha-blue hover:bg-isha-blue/20"
-              >
-                WhatsApp seller
-              </a>
+            <div>
+              <p className="font-semibold text-isha-text">{r.itemName}</p>
+              <p className="text-sm text-gray-600">
+                Expected {formatUGX(r.expectedPrice)} · {r.condition}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Status:{" "}
+                <span className="font-medium text-isha-text">{r.status}</span>
+              </p>
             </div>
             <p className="mt-3 text-sm text-gray-700">{r.description}</p>
             <p className="mt-2 text-xs text-gray-500">
@@ -182,6 +172,14 @@ export function SellRequestsPanel() {
                 className="rounded-xl border border-isha-border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-isha-muted"
               >
                 Call seller
+              </a>
+              <a
+                href={wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-isha-border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-isha-muted"
+              >
+                WhatsApp seller
               </a>
             </div>
           </li>

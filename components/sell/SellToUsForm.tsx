@@ -239,7 +239,7 @@ export function SellToUsForm() {
         onFilesChange={setFiles}
         idPrefix="sell-photos"
         maxFiles={8}
-        hint="Use good light and show any scratches or damage — we price fairly from what we see."
+        hint="Use good light and show any scratches or damage — we price fairly from what we see. Large photos are resized automatically before upload (same as our shop tools), so sending is faster on slow internet."
       />
       {status === "sending" && uploadLine && (
         <p

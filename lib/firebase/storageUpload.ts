@@ -127,6 +127,7 @@ async function uploadViaPresignedPut(
 
 /**
  * Upload images to Cloudflare R2.
+ * Every file is passed through {@link compressImageFileForUpload} first (same for admin inventory and sell-to-us).
  * - Small files: same-origin POST (works even if R2 CORS is not set).
  * - Large files (or POST 413): presigned PUT straight to R2 (needs CORS on the bucket).
  */
@@ -162,6 +163,7 @@ export type UploadProgressPayload = {
   label: string;
 };
 
+/** Uploads to R2; each image is resized/compressed in the browser when beneficial (shared by admin + public sell form). */
 export async function uploadMany(
   basePath: string,
   files: File[],

@@ -72,7 +72,10 @@ export async function createSellRequest(input: SellRequestInput): Promise<string
   return ref.id;
 }
 
-/** Create a pending request, upload images to Storage, then attach URLs. */
+/**
+ * Create a pending request, upload images to R2, then attach URLs.
+ * Uses the same `uploadMany` pipeline as admin (client-side resize/JPEG before upload).
+ */
 export async function submitSellRequestWithFiles(
   fields: Omit<SellRequestInput, "images">,
   files: File[],

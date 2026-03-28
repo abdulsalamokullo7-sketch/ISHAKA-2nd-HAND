@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
     name: APP_NAME,
-    short_name: "Ishaka Market",
+    short_name: "ISHAKA MARKET",
     description:
       "Ishaka's trusted second-hand shop — browse, save favorites, sell to us, WhatsApp sellers.",
     start_url: "/",

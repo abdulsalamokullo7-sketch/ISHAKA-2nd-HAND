@@ -81,8 +81,8 @@ export function MarketplaceHome() {
             Ishaka &middot; Online shop
           </p>
           <h1 className="mt-1.5 text-xl font-extrabold leading-tight tracking-tight text-isha-text sm:mt-3 sm:text-3xl md:text-4xl lg:text-5xl">
-            Second-hand,{" "}
-            <span className="text-isha-primary">first-class</span>
+            Second Hand,{" "}
+            <span className="text-isha-primary">First Class</span>
           </h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-isha-text-muted sm:mt-3 sm:text-base">
             Pre-owned electronics, fashion, books & more — priced in UGX.
