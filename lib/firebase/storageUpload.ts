@@ -1,5 +1,6 @@
 "use client";
 
+import { compressImageFileForUpload } from "@/lib/compressImageForUpload";
 import {
   FORM_UPLOAD_SAFE_MAX_BYTES,
   inferImageContentType,
@@ -130,16 +131,17 @@ async function uploadViaPresignedPut(
  * - Large files (or POST 413): presigned PUT straight to R2 (needs CORS on the bucket).
  */
 async function uploadOne(basePath: string, file: File): Promise<string> {
-  const contentType = inferImageContentType(file);
+  const prepared = await compressImageFileForUpload(file);
+  const contentType = inferImageContentType(prepared);
   if (!contentType.startsWith("image/")) {
     throw new Error("Only image files are allowed.");
   }
 
-  const useFormFirst = file.size <= FORM_UPLOAD_SAFE_MAX_BYTES;
+  const useFormFirst = prepared.size <= FORM_UPLOAD_SAFE_MAX_BYTES;
 
   if (useFormFirst) {
     try {
-      return await uploadViaFormPost(basePath, file, contentType);
+      return await uploadViaFormPost(basePath, prepared, contentType);
     } catch (e) {
       const status = (e as Error & { status?: number }).status;
       const msg = e instanceof Error ? e.message : "";
@@ -149,7 +151,7 @@ async function uploadOne(basePath: string, file: File): Promise<string> {
     }
   }
 
-  return uploadViaPresignedPut(basePath, file, contentType);
+  return uploadViaPresignedPut(basePath, prepared, contentType);
 }
 
 export type UploadProgressPayload = {

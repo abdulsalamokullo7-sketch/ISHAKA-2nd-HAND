@@ -138,6 +138,9 @@ export function InventoryPanel() {
         ? "Uploading photo…"
         : `Uploading ${added.length} photos…`,
     );
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
     try {
       const urls = await uploadMany(`items/${storageItemId}`, added, {
         onProgress: ({ completed, total, label }) => {
@@ -437,14 +440,6 @@ export function InventoryPanel() {
                 {photoPickStatus}
               </p>
             )}
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950 ring-1 ring-amber-100">
-              <span className="font-bold">Firestore:</span> After you click{" "}
-              <strong>Publish item</strong> or <strong>Save changes</strong>, open{" "}
-              <strong>Firebase Console</strong> → <strong>Firestore</strong> →{" "}
-              <code className="rounded bg-white px-1 font-mono text-[11px]">items</code> → your document
-              → field <code className="rounded bg-white px-1 font-mono text-[11px]">images</code> (array of
-              URLs).
-            </p>
           </div>
           <div className="sm:col-span-2">
             <SingleImageCapture
