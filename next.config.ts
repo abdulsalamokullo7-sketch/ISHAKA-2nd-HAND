@@ -1,5 +1,25 @@
 import type { NextConfig } from "next";
 
+function r2PublicHostnamePattern():
+  | { protocol: "https"; hostname: string; pathname: string }
+  | null {
+  const base = process.env.R2_PUBLIC_BASE_URL?.trim();
+  if (!base) return null;
+  try {
+    const u = new URL(base);
+    if (u.protocol !== "https:" || !u.hostname) return null;
+    return {
+      protocol: "https",
+      hostname: u.hostname,
+      pathname: "/**",
+    };
+  } catch {
+    return null;
+  }
+}
+
+const r2FromEnv = r2PublicHostnamePattern();
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -30,12 +50,12 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },
-      // Cloudflare R2 public bucket (pub-*.r2.dev or custom domain — add yours if needed)
       {
         protocol: "https",
         hostname: "*.r2.dev",
         pathname: "/**",
       },
+      ...(r2FromEnv ? [r2FromEnv] : []),
     ],
   },
 };

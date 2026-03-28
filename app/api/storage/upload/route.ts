@@ -1,9 +1,12 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "@/lib/firebase/admin";
+import { inferImageContentType, imageExtensionForUpload } from "@/lib/imageUpload";
 import { buildPublicUrl, uploadObjectToR2 } from "@/lib/r2/server";
 
 export const runtime = "nodejs";
+/** Large uploads should use presigned PUT (see storageUpload.ts); allow generous POST for self‑hosted. */
+export const maxDuration = 120;
 
 /**
  * Same path rules as /api/storage/presign — only these prefixes are allowed.
@@ -11,14 +14,12 @@ export const runtime = "nodejs";
 const ALLOWED_BASE =
   /^(items\/[a-zA-Z0-9_-]+(\/student-id)?|sell-requests\/[a-zA-Z0-9_-]+)$/;
 
-/** ~4 MiB — keeps under typical Vercel Hobby request limits; raise if you self-host. */
-const MAX_BYTES = 4 * 1024 * 1024;
-
-function sanitizeExtension(name: string): string {
-  const e =
-    name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5) || "jpg";
-  if (!e || e === "jpeg") return "jpg";
-  return e;
+function maxUploadBytes(): number | null {
+  const raw = process.env.R2_UPLOAD_MAX_BYTES?.trim();
+  if (raw === "" || raw === undefined) return 100 * 1024 * 1024; // 100 MB default (local / VPS)
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null; // no cap (not recommended on shared hosting)
+  return Math.floor(n);
 }
 
 /**
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid basePath" }, { status: 400 });
     }
 
-    const contentType = file.type || "image/jpeg";
+    const contentType = inferImageContentType(file);
     if (!contentType.startsWith("image/")) {
       return NextResponse.json(
         { error: "Only image uploads are allowed" },
@@ -58,16 +59,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (file.size > MAX_BYTES) {
+    const cap = maxUploadBytes();
+    if (cap !== null && file.size > cap) {
       return NextResponse.json(
         {
-          error: `Image too large (max ${Math.floor(MAX_BYTES / (1024 * 1024))} MB per file on this deployment).`,
+          error: `Image too large for this upload path (${Math.round(cap / (1024 * 1024))} MB server cap). Try a smaller file, or the app will use direct storage upload for large photos if R2 CORS is configured.`,
         },
         { status: 413 },
       );
     }
 
-    const ext = sanitizeExtension(file.name);
+    const ext = imageExtensionForUpload(file, contentType);
     const key = `${basePath}/${Date.now()}-${randomBytes(8).toString("hex")}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
