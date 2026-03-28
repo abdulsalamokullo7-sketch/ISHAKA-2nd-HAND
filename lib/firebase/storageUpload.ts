@@ -3,8 +3,8 @@
 import { getFirebaseAuth } from "./client";
 
 /**
- * Upload images to Cloudflare R2 via presigned PUT (see /api/storage/presign).
- * Firebase is used only for Auth (ID token). Firestore still stores the returned URLs.
+ * Upload images to Cloudflare R2 via same-origin POST /api/storage/upload.
+ * (Direct presigned PUT to R2 often fails with "Failed to fetch" until R2 CORS is configured.)
  */
 async function uploadOne(basePath: string, file: File): Promise<string> {
   const auth = getFirebaseAuth();
@@ -13,45 +13,46 @@ async function uploadOne(basePath: string, file: File): Promise<string> {
     throw new Error("You must be signed in to upload images.");
   }
   const idToken = await user.getIdToken();
-  const ext =
-    file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5) ||
-    "jpg";
   const contentType = file.type || "image/jpeg";
   if (!contentType.startsWith("image/")) {
     throw new Error("Only image files are allowed.");
   }
 
-  const res = await fetch("/api/storage/presign", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify({
-      basePath,
-      contentType,
-      extension: ext,
-    }),
-  });
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("basePath", basePath);
 
-  const data = (await res.json()) as {
-    error?: string;
-    uploadUrl?: string;
-    publicUrl?: string;
-  };
+  let res: Response;
+  try {
+    res = await fetch("/api/storage/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: formData,
+    });
+  } catch (e) {
+    const msg =
+      e instanceof Error ? e.message : "Network error during upload.";
+    throw new Error(
+      `${msg} If this persists, check that the dev server is running and you are not offline.`,
+    );
+  }
+
+  let data: { error?: string; publicUrl?: string };
+  try {
+    data = (await res.json()) as { error?: string; publicUrl?: string };
+  } catch {
+    throw new Error(`Upload failed (${res.status}: invalid response).`);
+  }
+
   if (!res.ok) {
-    throw new Error(data.error ?? "Could not prepare upload.");
+    throw new Error(data.error ?? `Upload failed (${res.status}).`);
   }
-
-  const put = await fetch(data.uploadUrl!, {
-    method: "PUT",
-    body: file,
-    headers: { "Content-Type": contentType },
-  });
-  if (!put.ok) {
-    throw new Error(`Upload failed (${put.status})`);
+  if (!data.publicUrl) {
+    throw new Error("Upload succeeded but no public URL was returned.");
   }
-  return data.publicUrl!;
+  return data.publicUrl;
 }
 
 export async function uploadMany(

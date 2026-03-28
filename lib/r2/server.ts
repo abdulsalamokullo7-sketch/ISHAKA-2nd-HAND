@@ -35,6 +35,24 @@ export async function createPresignedPutUrl(
   return getSignedUrl(getR2Client(), cmd, { expiresIn: 3600 });
 }
 
+/** Upload bytes from the Node server (avoids browser CORS to R2). */
+export async function uploadObjectToR2(
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<void> {
+  const bucket = process.env.R2_BUCKET_NAME;
+  if (!bucket) throw new Error("R2_BUCKET_NAME is not set.");
+  await getR2Client().send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    }),
+  );
+}
+
 /** Public URL for an object key (R2 custom domain or r2.dev public bucket URL). */
 export function buildPublicUrl(key: string): string {
   const base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");

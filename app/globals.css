@@ -29,13 +29,24 @@ body {
   background: var(--color-isha-page);
   color: var(--foreground);
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle grid for hero depth (first-class shop feel) */
+/* Smooth scrolling everywhere */
+html { scroll-behavior: smooth; }
+
+/* Hide scrollbar on horizontal scroll containers but keep scroll */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Snap scroll for horizontal carousels */
+.snap-x { scroll-snap-type: x mandatory; }
+.snap-start { scroll-snap-align: start; }
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -48,18 +59,16 @@ body {
 }
 .animate-slide-up { animation: slide-up 0.3s ease-out; }
 
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.25s ease-out; }
+
 .hero-mesh {
   background-color: #f0fdf4;
   background-image:
-    radial-gradient(
-      ellipse 120% 80% at 100% 0%,
-      rgb(220 252 231 / 0.9),
-      transparent 55%
-    ),
-    radial-gradient(
-      ellipse 80% 60% at 0% 100%,
-      rgb(219 234 254 / 0.5),
-      transparent 50%
-    ),
+    radial-gradient(ellipse 120% 80% at 100% 0%, rgb(220 252 231 / 0.9), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 0% 100%, rgb(219 234 254 / 0.5), transparent 50%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }

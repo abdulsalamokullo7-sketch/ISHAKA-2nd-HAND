@@ -226,12 +226,19 @@ export function InventoryPanel() {
             <input
               required
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="e.g. 0703268522 or +256703268522 (WhatsApp / call)"
               value={form.phone}
               onChange={(e) =>
                 setForm((f) => ({ ...f, phone: e.target.value }))
               }
               className={fieldInput}
             />
+            <p className="mt-1.5 text-xs text-isha-text-muted">
+              Shown on the public item page for WhatsApp and phone calls — use your
+              shop number or the seller&apos;s number for this item.
+            </p>
           </div>
           <div>
             <label className={fieldLabel}>

@@ -49,58 +49,48 @@ export default function FavoritesPage() {
   }, [items, ids]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <p className="text-xs font-bold uppercase tracking-widest text-isha-primary">
+    <div className="mx-auto max-w-7xl px-4 pb-24 pt-4 sm:px-6 sm:pb-10 sm:pt-10">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-isha-primary sm:text-xs">
         {APP_NAME}
       </p>
-      <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-isha-text sm:text-4xl">
+      <h1 className="mt-1 text-xl font-extrabold tracking-tight text-isha-text sm:mt-2 sm:text-3xl lg:text-4xl">
         Saved items
       </h1>
-      <p className="mt-2 max-w-2xl text-isha-text-muted">
-        Items you have hearted for later. Saved only on this device.
+      <p className="mt-1 text-xs text-isha-text-muted sm:mt-2 sm:text-base">
+        Hearted items, saved on this device.
       </p>
       <Link
         href="/"
-        className="mt-4 inline-flex text-sm font-bold text-isha-primary hover:underline"
+        className="mt-2 inline-flex text-xs font-bold text-isha-primary sm:mt-4 sm:text-sm"
       >
         ← Continue shopping
       </Link>
 
       {error && (
-        <p
-          className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          role="alert"
-        >
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 sm:mt-8 sm:px-4 sm:py-3 sm:text-sm" role="alert">
           {error}
         </p>
       )}
 
       {!ready || loading ? (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-80 animate-pulse rounded-2xl bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100"
-            />
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-square animate-pulse rounded-2xl bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100" />
           ))}
         </div>
       ) : ids.length === 0 ? (
-        <p className="mt-10 rounded-2xl border border-dashed border-isha-border bg-white px-6 py-14 text-center text-isha-text-muted shadow-sm">
+        <p className="mt-6 rounded-xl border border-dashed border-isha-border bg-white px-4 py-10 text-center text-sm text-isha-text-muted shadow-sm sm:mt-10 sm:rounded-2xl sm:px-6 sm:py-14">
           Nothing saved yet. Tap the heart on any product to add it here.
         </p>
       ) : saved.length === 0 ? (
-        <p className="mt-10 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-8 text-center text-amber-900">
-          Some saved items are no longer available. Clear your list from each
-          card or browse{" "}
-          <Link href="/" className="font-bold underline">
-            the shop
-          </Link>
-          .
+        <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-6 text-center text-sm text-amber-900 sm:mt-10 sm:px-6 sm:py-8">
+          Some saved items are no longer available.{" "}
+          <Link href="/" className="font-bold underline">Browse the shop</Link>.
         </p>
       ) : (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-5">
           {saved.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard key={item.id} item={item} compact />
           ))}
         </div>
       )}

@@ -71,8 +71,7 @@ export default function RootLayout({
           </main>
           <SiteFooter />
           <MobileBottomNav />
-          {/* Spacer for mobile bottom nav */}
-          <div className="h-16 md:hidden" aria-hidden />
+          <div className="h-20 md:hidden" aria-hidden />
           <PwaClient />
         </Providers>
       </body>
