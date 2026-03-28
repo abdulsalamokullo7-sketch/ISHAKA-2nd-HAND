@@ -1,0 +1,81 @@
+================================================================================
+R2 CORS — required for LARGE photo uploads on your live site
+================================================================================
+
+The app uploads small images through your Next.js server. Bigger files go
+straight from the browser to R2 using a presigned URL. The browser will
+block that unless your R2 bucket allows your shop’s origin in CORS.
+
+--------------------------------------------------------------------------------
+STEP 1 — Know your real site origin(s)
+--------------------------------------------------------------------------------
+
+An "origin" is ONLY: scheme + host + port (no path, no trailing slash).
+
+  Good:   https://ishaka-market.vercel.app
+  Good:   https://www.yourdomain.com
+  Bad:    https://ishaka-market.vercel.app/sell
+  Bad:    ishaka-market.vercel.app   (missing https://)
+
+If you use BOTH Vercel and a custom domain, list BOTH in AllowedOrigins.
+
+--------------------------------------------------------------------------------
+STEP 2 — Edit r2/cors.json in this folder
+--------------------------------------------------------------------------------
+
+1. Open:  r2/cors.json
+
+2. Replace this line with YOUR production origin:
+      "https://YOUR-VERCEL-APP.vercel.app"
+   Example:
+      "https://ishaka-second-hand.vercel.app"
+
+3. Optional: add a comma after that line and another string for a custom domain:
+      "https://www.yourdomain.com"
+
+4. Keep localhost lines if you still test uploads locally; remove them if you want.
+
+5. Save the file. Valid JSON: no trailing comma after the last origin string.
+
+--------------------------------------------------------------------------------
+STEP 3 — Apply the policy in Cloudflare (this is what makes it work online)
+--------------------------------------------------------------------------------
+
+1. Log in:  https://dash.cloudflare.com
+
+2. Open:  R2  →  object storage
+
+3. Click the bucket name that matches your env var  R2_BUCKET_NAME
+
+4. Open the  Settings  tab for that bucket
+
+5. Scroll to  CORS policy  (or "Cross-Origin Resource Sharing")
+
+6. Paste the ENTIRE contents of  r2/cors.json  (the [ ... ] JSON array)
+
+7. Save
+
+Cloudflare may take a short time to apply changes. Try a large upload again
+after 1–2 minutes.
+
+--------------------------------------------------------------------------------
+STEP 4 — Confirm it matches your deployment
+--------------------------------------------------------------------------------
+
+- The bucket you edited must be the same one as  R2_BUCKET_NAME  on Vercel
+  (or your host).
+
+- The origin you added must match exactly how users open the shop (including
+  https and www vs non-www).
+
+--------------------------------------------------------------------------------
+Troubleshooting
+--------------------------------------------------------------------------------
+
+- Large uploads fail, small ones work  →  CORS missing or wrong origin, or
+  policy not saved on the correct bucket.
+
+- "Failed to fetch" on upload  →  Often CORS or wrong R2 public URL; also
+  check  R2_PUBLIC_BASE_URL  in server env.
+
+================================================================================
