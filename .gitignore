@@ -35,6 +35,8 @@ yarn-error.log*
 
 # Firebase Admin JSON (local copy; use FIREBASE_SERVICE_ACCOUNT_KEY on Vercel)
 firebase-admin-service-account.json
+firebase-admin-oneline.txt
+firebase-admin-base64.txt
 
 # Nested duplicate project / build artifacts (never commit)
 ishaka-market/
