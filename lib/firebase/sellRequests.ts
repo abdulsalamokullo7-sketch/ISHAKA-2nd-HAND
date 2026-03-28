@@ -12,6 +12,7 @@ import {
   updateDoc,
   type DocumentData,
 } from "firebase/firestore";
+import { normalizeFirestoreImageUrls } from "@/lib/normalizeFirestoreImages";
 import { getFirebaseDb } from "./client";
 import type { SellRequest, SellRequestStatus } from "@/lib/types";
 import { ensureUploadAuth } from "./anonymous";
@@ -21,7 +22,7 @@ function mapReq(id: string, data: DocumentData): SellRequest {
   return {
     id,
     itemName: String(data.itemName ?? ""),
-    images: Array.isArray(data.images) ? (data.images as string[]) : [],
+    images: normalizeFirestoreImageUrls(data.images),
     expectedPrice: Number(data.expectedPrice ?? 0),
     condition: String(data.condition ?? ""),
     phone: String(data.phone ?? ""),

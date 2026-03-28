@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
         hostname: "*.r2.dev",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.r2.dev",
+        pathname: "/**",
+      },
       ...(r2FromEnv ? [r2FromEnv] : []),
     ],
   },

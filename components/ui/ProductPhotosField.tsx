@@ -12,6 +12,11 @@ type Props = {
   idPrefix?: string;
   /** Hint shown under tips (e.g. admin vs sell). */
   hint?: string;
+  /** Already-uploaded image URLs (e.g. auto-uploaded from admin). */
+  remoteUrls?: string[];
+  onRemoteRemove?: (index: number) => void;
+  /** Fired right after new files are appended (camera/gallery). */
+  onFilesPicked?: (picked: File[]) => void;
 };
 
 export function PhotoTips() {
@@ -34,6 +39,9 @@ export function ProductPhotosField({
   maxFiles = 12,
   idPrefix = "product-photos",
   hint,
+  remoteUrls = [],
+  onRemoteRemove,
+  onFilesPicked,
 }: Props) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -49,12 +57,18 @@ export function ProductPhotosField({
     };
   }, [previewUrls]);
 
-  const canAdd = files.length < maxFiles;
+  const totalCount = remoteUrls.length + files.length;
+  const canAdd = totalCount < maxFiles;
 
   function appendFromList(list: FileList | null) {
     if (!list?.length) return;
-    const next = [...files, ...Array.from(list)].slice(0, maxFiles);
+    const incoming = Array.from(list);
+    const room = maxFiles - remoteUrls.length - files.length;
+    if (room <= 0) return;
+    const added = incoming.slice(0, room);
+    const next = [...files, ...added];
     onFilesChange(next);
+    if (added.length > 0) onFilesPicked?.(added);
   }
 
   function removeAt(index: number) {
@@ -127,11 +141,44 @@ export function ProductPhotosField({
       </div>
 
       <p className="text-xs text-isha-text-muted">
-        {files.length} / {maxFiles} photos · On your phone, &quot;Take photo&quot; opens the camera.
+        {totalCount} / {maxFiles} photos · On your phone, &quot;Take photo&quot; opens the camera.
+        {onFilesPicked && (
+          <span className="block text-isha-primary/90">
+            New picks upload automatically — use Publish / Save to write the listing to Firestore.
+          </span>
+        )}
       </p>
 
-      {previewUrls.length > 0 && (
+      {(remoteUrls.length > 0 || previewUrls.length > 0) && (
         <ul className="flex flex-wrap gap-2">
+          {remoteUrls.map((url, i) => (
+            <li
+              key={`remote-${url}-${i}`}
+              className="relative h-24 w-24 overflow-hidden rounded-xl border border-isha-border bg-isha-muted shadow-sm"
+            >
+              <Image
+                src={url}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="96px"
+                unoptimized
+              />
+              {onRemoteRemove && (
+                <button
+                  type="button"
+                  onClick={() => onRemoteRemove(i)}
+                  className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white backdrop-blur hover:bg-black/80"
+                  aria-label={`Remove uploaded photo ${i + 1}`}
+                >
+                  ×
+                </button>
+              )}
+              <span className="absolute bottom-1 left-1 rounded bg-emerald-700/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                up
+              </span>
+            </li>
+          ))}
           {previewUrls.map((url, i) => (
             <li
               key={`${url}-${i}`}
@@ -149,12 +196,12 @@ export function ProductPhotosField({
                 type="button"
                 onClick={() => removeAt(i)}
                 className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white backdrop-blur hover:bg-black/80"
-                aria-label={`Remove photo ${i + 1}`}
+                aria-label={`Remove photo ${remoteUrls.length + i + 1}`}
               >
                 ×
               </button>
               <span className="absolute bottom-1 left-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                {i + 1}
+                {remoteUrls.length + i + 1}
               </span>
             </li>
           ))}

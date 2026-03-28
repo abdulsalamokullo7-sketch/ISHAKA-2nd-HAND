@@ -18,6 +18,7 @@ export function ItemCard({ item, compact }: { item: Item; compact?: boolean }) {
             src={img}
             alt={item.name}
             fill
+            unoptimized
             className="object-cover transition duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
           />

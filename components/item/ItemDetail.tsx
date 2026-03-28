@@ -146,6 +146,7 @@ export function ItemDetail({ id }: { id: string }) {
                         src={src}
                         alt={`${item.name} photo ${i + 1}`}
                         fill
+                        unoptimized
                         className="object-cover"
                         sizes="(max-width: 640px) 100vw, 55vw"
                         priority={i === 0}
@@ -183,7 +184,7 @@ export function ItemDetail({ id }: { id: string }) {
                       photo === i ? "ring-isha-primary shadow-md" : "ring-transparent hover:ring-gray-200"
                     }`}
                   >
-                    <Image src={src} alt="" fill className="object-cover" sizes="80px" />
+                    <Image src={src} alt="" fill unoptimized className="object-cover" sizes="80px" />
                   </button>
                 ))}
               </div>

@@ -53,6 +53,7 @@ export function ImageLightbox({ src, alt, open, onClose }: Props) {
           src={src}
           alt={alt}
           fill
+          unoptimized
           className="object-contain"
           sizes="100vw"
           priority

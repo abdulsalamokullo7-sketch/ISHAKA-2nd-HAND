@@ -65,6 +65,9 @@ export function InventoryPanel() {
     featured: false,
   });
   const [files, setFiles] = useState<File[]>([]);
+  const [cloudImageUrls, setCloudImageUrls] = useState<string[]>([]);
+  const [photoUploadBusy, setPhotoUploadBusy] = useState(false);
+  const draftStorageIdRef = useRef<string | null>(null);
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
 
   async function load() {
@@ -97,6 +100,8 @@ export function InventoryPanel() {
         featured: false,
       });
       setFiles([]);
+      setCloudImageUrls([]);
+      draftStorageIdRef.current = null;
       setStudentIdFile(null);
       return;
     }
@@ -118,7 +123,48 @@ export function InventoryPanel() {
       featured: Boolean(item.featured),
     });
     setFiles([]);
+    setCloudImageUrls([...item.images]);
+    draftStorageIdRef.current = null;
     setStudentIdFile(null);
+  }
+
+  async function handleProductPhotosPicked(added: File[]) {
+    if (added.length === 0) return;
+    const storageItemId =
+      editing?.id ??
+      (draftStorageIdRef.current ??= crypto.randomUUID());
+    setPhotoUploadBusy(true);
+    setUploadStatus(
+      added.length === 1
+        ? "Uploading photo…"
+        : `Uploading ${added.length} photos…`,
+    );
+    try {
+      const urls = await uploadMany(`items/${storageItemId}`, added, {
+        onProgress: ({ completed, total, label }) => {
+          setUploadStatus(
+            completed === 0
+              ? `Uploading ${total} photo${total === 1 ? "" : "s"}…`
+              : `Uploaded ${completed}/${total} — ${label}`,
+          );
+        },
+      });
+      setCloudImageUrls((prev) => [...prev, ...urls]);
+      setFiles((f) => f.filter((x) => !added.includes(x)));
+      toast(
+        urls.length === 1
+          ? "Photo uploaded to storage."
+          : `${urls.length} photos uploaded to storage.`,
+        "success",
+      );
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Photo upload failed. Try again.";
+      toast(msg, "error");
+    } finally {
+      setPhotoUploadBusy(false);
+      setUploadStatus(null);
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -150,13 +196,18 @@ export function InventoryPanel() {
       };
       setUploadStatus("Saving item…");
       let id: string;
+      let imageUrls: string[] = [...cloudImageUrls];
+
       if (editing) {
         id = editing.id;
-        await updateItem(id, base);
+        const patch = { ...base };
+        delete (patch as { images?: string[] }).images;
+        await updateItem(id, patch);
       } else {
         id = await createItem({ ...base, images: [] });
       }
-      if (files.length) {
+
+      if (files.length > 0) {
         const urls = await uploadMany(`items/${id}`, files, {
           onProgress: ({ completed, total, label }) => {
             setUploadStatus(
@@ -166,11 +217,13 @@ export function InventoryPanel() {
             );
           },
         });
-        const merged = (editing ? [...editing.images, ...urls] : urls)
-          .map((u) => u.trim())
-          .filter(Boolean);
-        await updateItem(id, { images: merged });
+        imageUrls = [...imageUrls, ...urls];
       }
+
+      // Always write `images` so Firestore shows the array (URLs or empty []).
+      await updateItem(id, {
+        images: imageUrls.map((u) => u.trim()).filter(Boolean),
+      });
       if (studentIdFile) {
         setUploadStatus("Uploading student ID…");
         const sid = await uploadMany(`items/${id}/student-id`, [studentIdFile]);
@@ -179,7 +232,10 @@ export function InventoryPanel() {
       fillFromItem(null);
       await load();
       const parts: string[] = [];
-      if (files.length) parts.push(`${files.length} photo${files.length === 1 ? "" : "s"}`);
+      if (imageUrls.length)
+        parts.push(
+          `${imageUrls.length} listing photo${imageUrls.length === 1 ? "" : "s"}`,
+        );
       if (studentIdFile) parts.push("student ID");
       toast(
         parts.length
@@ -393,12 +449,25 @@ export function InventoryPanel() {
               onFilesChange={setFiles}
               idPrefix="inv-photos"
               maxFiles={12}
+              remoteUrls={cloudImageUrls}
+              onRemoteRemove={(i) =>
+                setCloudImageUrls((prev) => prev.filter((_, j) => j !== i))
+              }
+              onFilesPicked={handleProductPhotosPicked}
               hint={
-                editing && editing.images.length > 0
-                  ? "Existing photos are kept. New shots are added after you save."
-                  : "Take several angles: overall, labels, wear or damage."
+                editing && cloudImageUrls.length > 0
+                  ? "Green “up” = already in cloud. New picks upload right away; Publish / Save still updates the listing in Firestore."
+                  : "Take several angles: overall, labels, wear or damage. Shots upload as soon as you pick them."
               }
             />
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950 ring-1 ring-amber-100">
+              <span className="font-bold">Firestore:</span> After you click{" "}
+              <strong>Publish item</strong> or <strong>Save changes</strong>, open{" "}
+              <strong>Firebase Console</strong> → <strong>Firestore</strong> →{" "}
+              <code className="rounded bg-white px-1 font-mono text-[11px]">items</code> → your document
+              → field <code className="rounded bg-white px-1 font-mono text-[11px]">images</code> (array of
+              URLs).
+            </p>
           </div>
           <div className="sm:col-span-2">
             <SingleImageCapture
@@ -409,7 +478,7 @@ export function InventoryPanel() {
             />
           </div>
         </div>
-        {busy && uploadStatus && (
+        {(busy || photoUploadBusy) && uploadStatus && (
           <p
             className="mt-4 rounded-xl bg-isha-primary/10 px-4 py-3 text-sm font-semibold text-isha-primary ring-1 ring-isha-primary/20"
             role="status"
@@ -421,7 +490,7 @@ export function InventoryPanel() {
         <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || photoUploadBusy}
             className={`${btnPrimary} disabled:opacity-60`}
           >
             {busy
@@ -463,6 +532,7 @@ export function InventoryPanel() {
                       src={item.images[0]}
                       alt=""
                       fill
+                      unoptimized
                       className="object-cover"
                       sizes="96px"
                     />

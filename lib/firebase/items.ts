@@ -15,21 +15,10 @@ import {
   updateDoc,
   type DocumentData,
 } from "firebase/firestore";
+import { normalizeFirestoreImageUrls } from "@/lib/normalizeFirestoreImages";
 import { getFirebaseDb } from "./client";
 import type { Item, ItemStatus } from "@/lib/types";
 import type { Category, Condition, RegionId } from "@/lib/constants";
-
-function normalizeImageUrls(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
-  for (const x of raw) {
-    if (typeof x === "string") {
-      const t = x.trim();
-      if (t.length > 0) out.push(t);
-    }
-  }
-  return out;
-}
 
 /** Firestore rejects `undefined` field values — strip before write. */
 function omitUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
@@ -48,7 +37,7 @@ function mapItem(id: string, data: DocumentData): Item {
     description: String(data.description ?? ""),
     category: String(data.category ?? ""),
     condition: String(data.condition ?? ""),
-    images: normalizeImageUrls(data.images),
+    images: normalizeFirestoreImageUrls(data.images),
     location: String(data.location ?? ""),
     region: (data.region as RegionId) ?? "town",
     status: (data.status as ItemStatus) ?? "available",

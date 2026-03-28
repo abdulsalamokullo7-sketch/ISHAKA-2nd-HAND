@@ -115,6 +115,7 @@ export function SellRequestsPanel() {
                       src={src}
                       alt=""
                       fill
+                      unoptimized
                       className="object-cover"
                       sizes="80px"
                     />
