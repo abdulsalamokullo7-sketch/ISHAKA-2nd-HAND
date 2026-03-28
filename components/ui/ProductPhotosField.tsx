@@ -24,9 +24,12 @@ export function PhotoTips() {
     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-950 ring-1 ring-emerald-100">
       <p className="font-bold text-emerald-900">Sell faster with great photos</p>
       <ul className="mt-2 list-inside list-disc space-y-1 text-emerald-900/90">
-        <li>Use daylight or a bright room — avoid blur.</li>
-        <li>Show the front, any defects, and accessories in separate shots.</li>
-        <li>Keep the product centred; tap to focus before shooting.</li>
+        <li>Add several photos (angles, labels, wear) — not just one or two.</li>
+        <li>
+          <strong>Camera:</strong> tap again for each extra shot.{" "}
+          <strong>Gallery:</strong> select many at once where your phone allows it.
+        </li>
+        <li>Use daylight or a bright room — avoid blur; keep the product centred.</li>
       </ul>
     </div>
   );
@@ -36,7 +39,7 @@ export function ProductPhotosField({
   label = "Product photos",
   files,
   onFilesChange,
-  maxFiles = 12,
+  maxFiles = 16,
   idPrefix = "product-photos",
   hint,
   remoteUrls = [],
@@ -103,14 +106,16 @@ export function ProductPhotosField({
         <button
           type="button"
           disabled={!canAdd}
+          title="Opens the camera. Tap again for each extra photo — you can add many up to the limit."
           onClick={() => cameraRef.current?.click()}
-          className="inline-flex items-center gap-2 rounded-2xl border-2 border-isha-primary bg-white px-4 py-3 text-sm font-extrabold text-isha-primary shadow-sm transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl border-2 border-isha-primary bg-white px-3 py-3 text-sm font-extrabold text-isha-primary shadow-sm transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          Take photo
+          <span className="sm:hidden">Camera</span>
+          <span className="hidden sm:inline">Camera — one per tap</span>
         </button>
 
         <input
@@ -130,18 +135,20 @@ export function ProductPhotosField({
         <button
           type="button"
           disabled={!canAdd}
+          title="Pick several photos at once from your gallery when your phone supports multi-select."
           onClick={() => galleryRef.current?.click()}
-          className="inline-flex items-center gap-2 rounded-2xl border border-isha-border bg-white px-4 py-3 text-sm font-bold text-isha-text shadow-sm transition hover:bg-isha-muted disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl border border-isha-border bg-white px-3 py-3 text-sm font-bold text-isha-text shadow-sm transition hover:bg-isha-muted disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Gallery
+          <span className="sm:hidden">Gallery</span>
+          <span className="hidden sm:inline">Gallery — multi-select</span>
         </button>
       </div>
 
       <p className="text-xs text-isha-text-muted">
-        {totalCount} / {maxFiles} photos · On your phone, &quot;Take photo&quot; opens the camera.
+        {totalCount} / {maxFiles} photos · You can mix camera + gallery until you reach the limit.
       </p>
 
       {(remoteUrls.length > 0 || previewUrls.length > 0) && (

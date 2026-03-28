@@ -20,6 +20,24 @@ service cloud.firestore {
       allow read, update, delete: if isShopAccount();
     }
 
+    match /itemBuyerMessages/{msgId} {
+      // Buyers: anonymous or signed-in can leave a message about a product.
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(
+          ['itemId', 'itemName', 'buyerName', 'buyerPhone', 'message']
+        )
+        && request.resource.data.itemId is string
+        && request.resource.data.itemName is string
+        && request.resource.data.buyerName is string
+        && request.resource.data.buyerPhone is string
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 4000
+        && request.resource.data.buyerName.size() <= 200
+        && request.resource.data.buyerPhone.size() <= 40;
+      allow read, update, delete: if isShopAccount();
+    }
+
     // Optional: store { role: "admin" } if you prefer UID checks later.
     match /admins/{uid} {
       allow read, write: if false;

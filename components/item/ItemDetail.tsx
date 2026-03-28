@@ -14,7 +14,9 @@ import {
   telUrl,
 } from "@/lib/constants";
 import { hasFirebaseConfig } from "@/lib/firebase/env";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
+import { ItemBuyerMessageForm } from "./ItemBuyerMessageForm";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { ShareButton } from "@/components/ui/ShareButton";
 
@@ -214,6 +216,7 @@ export function ItemDetail({ id }: { id: string }) {
               </h1>
               <div className="flex shrink-0 items-center gap-1.5">
                 <ShareButton title={item.name} text={`Check out "${item.name}" on ${APP_NAME}`} />
+                <AddToCartButton itemId={item.id} />
                 <FavoriteButton itemId={item.id} />
               </div>
             </div>
@@ -241,6 +244,8 @@ export function ItemDetail({ id }: { id: string }) {
                 {item.description}
               </p>
             </div>
+
+            <ItemBuyerMessageForm itemId={item.id} itemName={item.name} />
 
             {/* Desktop CTA buttons */}
             <div className="hidden gap-3 sm:flex sm:flex-wrap">

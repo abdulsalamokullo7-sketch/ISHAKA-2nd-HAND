@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
 const TABS: readonly {
   href: string;
   label: string;
   icon: (p: { active?: boolean }) => React.JSX.Element;
-  badge?: boolean;
+  badge?: "cart" | "saved";
 }[] = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/favorites", label: "Saved", icon: HeartIcon, badge: true },
+  { href: "/cart", label: "Cart", icon: CartIcon, badge: "cart" },
+  { href: "/favorites", label: "Saved", icon: HeartIcon, badge: "saved" },
   { href: "/sell", label: "Sell", icon: PlusIcon },
   { href: "/about", label: "About", icon: InfoIcon },
   { href: "/admin", label: "Admin", icon: LockIcon },
@@ -19,7 +21,8 @@ const TABS: readonly {
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { count, ready } = useFavorites();
+  const { count: favCount, ready: favReady } = useFavorites();
+  const { count: cartCount, ready: cartReady } = useCart();
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -48,11 +51,20 @@ export function MobileBottomNav() {
               )}
               <Icon active={active} />
               <span>{tab.label}</span>
-              {tab.badge && ready && count > 0 && (
-                <span className="absolute right-[calc(50%-14px)] top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-isha-primary text-[8px] font-extrabold text-white ring-1 ring-white">
-                  {count > 9 ? "9+" : count}
-                </span>
-              )}
+              {tab.badge === "cart" &&
+                cartReady &&
+                cartCount > 0 && (
+                  <span className="absolute right-[calc(50%-14px)] top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-isha-primary text-[8px] font-extrabold text-white ring-1 ring-white">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                )}
+              {tab.badge === "saved" &&
+                favReady &&
+                favCount > 0 && (
+                  <span className="absolute right-[calc(50%-14px)] top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-500 text-[8px] font-extrabold text-white ring-1 ring-white">
+                    {favCount > 9 ? "9+" : favCount}
+                  </span>
+                )}
             </Link>
           );
         })}
@@ -69,6 +81,18 @@ function HomeIcon({ active }: { active?: boolean }) {
   ) : (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+    </svg>
+  );
+}
+
+function CartIcon({ active }: { active?: boolean }) {
+  return active ? (
+    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 001.305 6.823c.256.565.83.998 1.511.998h8.77a.75.75 0 000-1.5H8.972a1.75 1.75 0 01-1.317-.57l.055-.09.063-.092.019-.028 8.482-1.03a1.75 1.75 0 001.702-1.19l2.505-7.5a.75.75 0 00-.702-1.012H5.082l-.97-3.636A.75.75 0 003.375 3H2.25zM4.094 8.25h12.156l-2.18 6.54a.25.25 0 01-.242.18H8.972a.75.75 0 00-.648.372L7.5 15.75H6.375a1.875 1.875 0 01-1.756-2.448l1.092-4.068zM9.75 18a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zm4.5 0a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" />
+    </svg>
+  ) : (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218a1.5 1.5 0 001.464-1.175l.728-3.65A1.5 1.5 0 0017.128 9H6.872a1.5 1.5 0 00-1.464 1.175l-.728 3.65A1.5 1.5 0 006.872 15H19.5m-9 0v-3.75c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V15m-6 0H6.75m9 0h2.25" />
     </svg>
   );
 }

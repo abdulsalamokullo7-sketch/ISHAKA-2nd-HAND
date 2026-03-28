@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Item } from "@/lib/types";
 import { formatUGX } from "@/lib/constants";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 
 export function ItemCard({ item, compact }: { item: Item; compact?: boolean }) {
@@ -37,7 +38,8 @@ export function ItemCard({ item, compact }: { item: Item; compact?: boolean }) {
             Verified
           </span>
         )}
-        <span className="absolute bottom-1.5 right-1.5 z-10 sm:bottom-2 sm:right-2">
+        <span className="absolute bottom-1.5 right-1.5 z-10 flex gap-1 sm:bottom-2 sm:right-2">
+          <AddToCartButton itemId={item.id} size="sm" />
           <FavoriteButton itemId={item.id} size="sm" />
         </span>
       </div>

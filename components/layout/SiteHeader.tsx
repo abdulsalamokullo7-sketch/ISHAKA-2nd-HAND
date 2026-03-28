@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartHeaderLink } from "@/components/cart/CartHeaderLink";
 import {
   APP_BRAND_MARKET,
   APP_BRAND_SECOND_HAND,
@@ -30,7 +31,10 @@ export function SiteHeader() {
             </span>
           </span>
         </Link>
-        <SiteHeaderNav />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <CartHeaderLink />
+          <SiteHeaderNav />
+        </div>
       </div>
     </header>
   );

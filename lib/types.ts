@@ -26,6 +26,17 @@ export interface Item {
 
 export type SellRequestStatus = "pending" | "approved" | "rejected";
 
+/** Buyer question about a listing — shop reads in Admin → Buyer messages. */
+export interface ItemBuyerMessage {
+  id: string;
+  itemId: string;
+  itemName: string;
+  buyerName: string;
+  buyerPhone: string;
+  message: string;
+  createdAt: Timestamp | null;
+}
+
 export interface SellRequest {
   id: string;
   itemName: string;

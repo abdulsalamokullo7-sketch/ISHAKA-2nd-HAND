@@ -419,7 +419,7 @@ export function InventoryPanel() {
               files={files}
               onFilesChange={setFiles}
               idPrefix="inv-photos"
-              maxFiles={12}
+              maxFiles={16}
               remoteUrls={cloudImageUrls}
               onRemoteRemove={(i) =>
                 setCloudImageUrls((prev) => prev.filter((_, j) => j !== i))

@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
 const NAV_LINKS: readonly { href: string; label: string; badge?: boolean }[] = [
   { href: "/", label: "Shop" },
+  { href: "/cart", label: "Cart", badge: true },
   { href: "/favorites", label: "Saved", badge: true },
   { href: "/sell", label: "Sell to us" },
   { href: "/about", label: "About" },
 ];
 
 export function SiteHeaderNav() {
-  const { count, ready } = useFavorites();
+  const { count: favCount, ready: favReady } = useFavorites();
+  const { count: cartCount, ready: cartReady } = useCart();
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -33,11 +36,22 @@ export function SiteHeaderNav() {
           }`}
         >
           {link.label}
-          {link.badge && ready && count > 0 && (
-            <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-isha-primary px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
-              {count > 99 ? "99+" : count}
-            </span>
-          )}
+          {link.href === "/cart" &&
+            link.badge &&
+            cartReady &&
+            cartCount > 0 && (
+              <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-isha-primary px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          {link.href === "/favorites" &&
+            link.badge &&
+            favReady &&
+            favCount > 0 && (
+              <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
+                {favCount > 99 ? "99+" : favCount}
+              </span>
+            )}
         </Link>
       ))}
       <Link

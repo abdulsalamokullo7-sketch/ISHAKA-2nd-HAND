@@ -26,6 +26,7 @@ export function SiteFooter() {
             <ul className="mt-2 space-y-1.5 text-xs font-medium sm:mt-3 sm:space-y-2.5 sm:text-sm">
               <li><Link href="/" className="text-isha-text-muted transition hover:text-isha-primary">Browse items</Link></li>
               <li><Link href="/favorites" className="text-isha-text-muted transition hover:text-isha-primary">Saved</Link></li>
+              <li><Link href="/cart" className="text-isha-text-muted transition hover:text-isha-primary">Cart</Link></li>
               <li><Link href="/sell" className="text-isha-text-muted transition hover:text-isha-primary">Sell to us</Link></li>
             </ul>
           </div>

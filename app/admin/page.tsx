@@ -3,15 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { BuyerMessagesPanel } from "@/components/admin/BuyerMessagesPanel";
 import { InventoryPanel } from "@/components/admin/InventoryPanel";
 import { SellRequestsPanel } from "@/components/admin/SellRequestsPanel";
 import { APP_NAME } from "@/lib/constants";
 
-type Tab = "inventory" | "requests";
+type Tab = "inventory" | "requests" | "messages";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "inventory", label: "Inventory", icon: "📦" },
   { id: "requests", label: "Sell requests", icon: "📩" },
+  { id: "messages", label: "Buyer messages", icon: "💬" },
 ];
 
 export default function AdminPage() {
@@ -72,7 +74,13 @@ export default function AdminPage() {
 
       {/* Content */}
       <div className="mt-8">
-        {tab === "inventory" ? <InventoryPanel /> : <SellRequestsPanel />}
+        {tab === "inventory" ? (
+          <InventoryPanel />
+        ) : tab === "requests" ? (
+          <SellRequestsPanel />
+        ) : (
+          <BuyerMessagesPanel />
+        )}
       </div>
     </div>
   );
