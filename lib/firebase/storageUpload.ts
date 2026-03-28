@@ -152,13 +152,30 @@ async function uploadOne(basePath: string, file: File): Promise<string> {
   return uploadViaPresignedPut(basePath, file, contentType);
 }
 
+export type UploadProgressPayload = {
+  /** How many files have finished uploading (0 before first file starts). */
+  completed: number;
+  total: number;
+  /** Current file name or short phase label. */
+  label: string;
+};
+
 export async function uploadMany(
   basePath: string,
   files: File[],
+  opts?: { onProgress?: (p: UploadProgressPayload) => void },
 ): Promise<string[]> {
   const urls: string[] = [];
-  for (const f of files) {
+  const total = files.length;
+  if (total > 0) {
+    opts?.onProgress?.({ completed: 0, total, label: "Starting…" });
+  }
+  for (let i = 0; i < total; i++) {
+    const f = files[i]!;
+    const label = f.name?.trim() || `Photo ${i + 1}`;
+    opts?.onProgress?.({ completed: i, total, label });
     urls.push(await uploadOne(basePath, f));
+    opts?.onProgress?.({ completed: i + 1, total, label });
   }
   return urls;
 }

@@ -15,7 +15,7 @@ import {
 import { getFirebaseDb } from "./client";
 import type { SellRequest, SellRequestStatus } from "@/lib/types";
 import { ensureUploadAuth } from "./anonymous";
-import { uploadMany } from "./storageUpload";
+import { uploadMany, type UploadProgressPayload } from "./storageUpload";
 
 function mapReq(id: string, data: DocumentData): SellRequest {
   return {
@@ -75,6 +75,7 @@ export async function createSellRequest(input: SellRequestInput): Promise<string
 export async function submitSellRequestWithFiles(
   fields: Omit<SellRequestInput, "images">,
   files: File[],
+  opts?: { onUploadProgress?: (p: UploadProgressPayload) => void },
 ): Promise<string> {
   await ensureUploadAuth();
   const db = getFirebaseDb();
@@ -85,11 +86,15 @@ export async function submitSellRequestWithFiles(
     createdAt: serverTimestamp(),
   });
   if (files.length > 0) {
-    const urls = await uploadMany(`sell-requests/${ref.id}`, files);
+    const urls = await uploadMany(`sell-requests/${ref.id}`, files, {
+      onProgress: opts?.onUploadProgress,
+    });
     await updateDoc(ref, { images: urls });
   }
   return ref.id;
 }
+
+export type { UploadProgressPayload };
 
 export async function updateSellRequest(
   id: string,

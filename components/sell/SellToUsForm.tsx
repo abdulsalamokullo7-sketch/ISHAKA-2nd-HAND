@@ -18,8 +18,10 @@ import {
   fieldTextarea,
 } from "@/lib/ui/field-styles";
 import { ProductPhotosField } from "@/components/ui/ProductPhotosField";
+import { useToast } from "@/contexts/ToastContext";
 
 export function SellToUsForm() {
+  const { toast } = useToast();
   const [itemName, setItemName] = useState("");
   const [expectedPrice, setExpectedPrice] = useState("");
   const [condition, setCondition] = useState<string>("Used");
@@ -35,6 +37,7 @@ export function SellToUsForm() {
     "idle",
   );
   const [message, setMessage] = useState<string | null>(null);
+  const [uploadLine, setUploadLine] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,6 +60,7 @@ export function SellToUsForm() {
     const fullLocation = `${REGIONS.find((r) => r.id === region)?.label ?? region} — ${location.trim()}`;
     setStatus("sending");
     setMessage(null);
+    setUploadLine("Saving your request…");
     try {
       await submitSellRequestWithFiles(
         {
@@ -69,22 +73,40 @@ export function SellToUsForm() {
           meetingPreference,
         },
         files,
+        {
+          onUploadProgress: ({ completed, total, label }) => {
+            if (total === 0) return;
+            setUploadLine(
+              completed === 0
+                ? `Uploading ${total} photo${total === 1 ? "" : "s"}…`
+                : `Uploaded ${completed}/${total} — ${label}`,
+            );
+          },
+        },
       );
       setStatus("done");
+      setUploadLine(null);
       setItemName("");
       setExpectedPrice("");
       setPhone("");
       setDescription("");
       setLocation("");
       setFiles([]);
+      const photoNote =
+        files.length > 0
+          ? ` ${files.length} photo${files.length === 1 ? "" : "s"} uploaded.`
+          : "";
       setMessage(
-        "Thanks! The shop will review your item and contact you on WhatsApp or call.",
+        `Thanks! The shop will review your item and contact you on WhatsApp or call.${photoNote}`,
       );
+      toast(`Submitted successfully.${photoNote}`, "success");
     } catch (err) {
       setStatus("error");
-      setMessage(
-        err instanceof Error ? err.message : "Something went wrong. Try again.",
-      );
+      setUploadLine(null);
+      const errMsg =
+        err instanceof Error ? err.message : "Something went wrong. Try again.";
+      setMessage(errMsg);
+      toast(errMsg, "error");
     }
   }
 
@@ -219,6 +241,15 @@ export function SellToUsForm() {
         maxFiles={8}
         hint="Use good light and show any scratches or damage — we price fairly from what we see."
       />
+      {status === "sending" && uploadLine && (
+        <p
+          className="rounded-xl bg-isha-primary/10 px-3 py-2 text-sm font-semibold text-isha-primary ring-1 ring-isha-primary/20"
+          role="status"
+          aria-live="polite"
+        >
+          {uploadLine}
+        </p>
+      )}
       {message && (
         <p
           className={`rounded-xl px-3 py-2 text-sm font-medium ${
@@ -227,6 +258,7 @@ export function SellToUsForm() {
               : "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100"
           }`}
           role="status"
+          aria-live="polite"
         >
           {message}
         </p>
@@ -236,7 +268,9 @@ export function SellToUsForm() {
         disabled={status === "sending"}
         className={btnPrimaryFull}
       >
-        {status === "sending" ? "Sending…" : "Submit to shop"}
+        {status === "sending"
+          ? uploadLine ?? "Working…"
+          : "Submit to shop"}
       </button>
     </form>
   );

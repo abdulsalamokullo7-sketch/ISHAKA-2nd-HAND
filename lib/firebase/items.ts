@@ -6,7 +6,9 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocFromServer,
   getDocs,
+  getDocsFromServer,
   orderBy,
   query,
   serverTimestamp,
@@ -17,6 +19,27 @@ import { getFirebaseDb } from "./client";
 import type { Item, ItemStatus } from "@/lib/types";
 import type { Category, Condition, RegionId } from "@/lib/constants";
 
+function normalizeImageUrls(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const x of raw) {
+    if (typeof x === "string") {
+      const t = x.trim();
+      if (t.length > 0) out.push(t);
+    }
+  }
+  return out;
+}
+
+/** Firestore rejects `undefined` field values — strip before write. */
+function omitUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
 function mapItem(id: string, data: DocumentData): Item {
   return {
     id,
@@ -25,7 +48,7 @@ function mapItem(id: string, data: DocumentData): Item {
     description: String(data.description ?? ""),
     category: String(data.category ?? ""),
     condition: String(data.condition ?? ""),
-    images: Array.isArray(data.images) ? (data.images as string[]) : [],
+    images: normalizeImageUrls(data.images),
     location: String(data.location ?? ""),
     region: (data.region as RegionId) ?? "town",
     status: (data.status as ItemStatus) ?? "available",
@@ -40,7 +63,13 @@ function mapItem(id: string, data: DocumentData): Item {
 export async function fetchItems(): Promise<Item[]> {
   const db = getFirebaseDb();
   const q = query(collection(db, "items"), orderBy("createdAt", "desc"));
-  const snap = await getDocs(q);
+  // Prefer server so we never show stale `images: []` right after publishing (local cache lag).
+  let snap;
+  try {
+    snap = await getDocsFromServer(q);
+  } catch {
+    snap = await getDocs(q);
+  }
   return snap.docs.map((d) => mapItem(d.id, d.data()));
 }
 
@@ -52,7 +81,12 @@ export async function fetchAvailableItems(): Promise<Item[]> {
 export async function fetchItemById(id: string): Promise<Item | null> {
   const db = getFirebaseDb();
   const ref = doc(db, "items", id);
-  const s = await getDoc(ref);
+  let s;
+  try {
+    s = await getDocFromServer(ref);
+  } catch {
+    s = await getDoc(ref);
+  }
   if (!s.exists()) return null;
   return mapItem(s.id, s.data());
 }
@@ -75,19 +109,20 @@ export type ItemInput = {
 
 export async function createItem(input: ItemInput): Promise<string> {
   const db = getFirebaseDb();
-  const ref = await addDoc(collection(db, "items"), {
+  const payload = omitUndefined({
     ...input,
     status: input.status ?? "available",
     createdAt: serverTimestamp(),
-  });
+  }) as DocumentData;
+  const ref = await addDoc(collection(db, "items"), payload);
   return ref.id;
 }
 
 export async function updateItem(id: string, patch: Partial<ItemInput>): Promise<void> {
   const db = getFirebaseDb();
-  await updateDoc(doc(db, "items", id), {
-    ...patch,
-  });
+  const cleaned = omitUndefined(patch as Record<string, unknown>) as DocumentData;
+  if (Object.keys(cleaned).length === 0) return;
+  await updateDoc(doc(db, "items", id), cleaned);
 }
 
 export async function deleteItem(id: string): Promise<void> {

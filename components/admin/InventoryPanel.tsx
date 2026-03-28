@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CATEGORIES,
   CONDITIONS,
@@ -31,12 +31,16 @@ import {
 } from "@/lib/ui/field-styles";
 import { ProductPhotosField } from "@/components/ui/ProductPhotosField";
 import { SingleImageCapture } from "@/components/ui/SingleImageCapture";
+import { useToast } from "@/contexts/ToastContext";
 
 export function InventoryPanel() {
+  const { toast } = useToast();
+  const submitLock = useRef(false);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Item | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [form, setForm] = useState<{
     name: string;
     price: string;
@@ -124,7 +128,10 @@ export function InventoryPanel() {
       return;
     }
     if (!Number.isFinite(price) || price <= 0) return;
+    if (submitLock.current) return;
+    submitLock.current = true;
     setBusy(true);
+    setUploadStatus(null);
     try {
       const base: ItemInput = {
         name: form.name.trim(),
@@ -141,6 +148,7 @@ export function InventoryPanel() {
         studentIdImage: editing?.studentIdImage ?? null,
         status: editing?.status ?? "available",
       };
+      setUploadStatus("Saving item…");
       let id: string;
       if (editing) {
         id = editing.id;
@@ -149,18 +157,45 @@ export function InventoryPanel() {
         id = await createItem({ ...base, images: [] });
       }
       if (files.length) {
-        const urls = await uploadMany(`items/${id}`, files);
-        const merged = editing ? [...editing.images, ...urls] : urls;
+        const urls = await uploadMany(`items/${id}`, files, {
+          onProgress: ({ completed, total, label }) => {
+            setUploadStatus(
+              completed === 0
+                ? `Uploading ${total} photo${total === 1 ? "" : "s"}…`
+                : `Uploaded ${completed}/${total} — ${label}`,
+            );
+          },
+        });
+        const merged = (editing ? [...editing.images, ...urls] : urls)
+          .map((u) => u.trim())
+          .filter(Boolean);
         await updateItem(id, { images: merged });
       }
       if (studentIdFile) {
+        setUploadStatus("Uploading student ID…");
         const sid = await uploadMany(`items/${id}/student-id`, [studentIdFile]);
         await updateItem(id, { studentIdImage: sid[0] ?? null });
       }
       fillFromItem(null);
       await load();
+      const parts: string[] = [];
+      if (files.length) parts.push(`${files.length} photo${files.length === 1 ? "" : "s"}`);
+      if (studentIdFile) parts.push("student ID");
+      toast(
+        parts.length
+          ? `Saved — ${parts.join(" & ")} uploaded.`
+          : "Item saved.",
+        "success",
+      );
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Save or upload failed. Try again.";
+      toast(msg, "error");
+      setUploadStatus(null);
     } finally {
+      submitLock.current = false;
       setBusy(false);
+      setUploadStatus(null);
     }
   }
 
@@ -374,13 +409,26 @@ export function InventoryPanel() {
             />
           </div>
         </div>
+        {busy && uploadStatus && (
+          <p
+            className="mt-4 rounded-xl bg-isha-primary/10 px-4 py-3 text-sm font-semibold text-isha-primary ring-1 ring-isha-primary/20"
+            role="status"
+            aria-live="polite"
+          >
+            {uploadStatus}
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={busy}
             className={`${btnPrimary} disabled:opacity-60`}
           >
-            {busy ? "Saving…" : editing ? "Save changes" : "Publish item"}
+            {busy
+              ? uploadStatus ?? "Working…"
+              : editing
+                ? "Save changes"
+                : "Publish item"}
           </button>
           {editing && (
             <button
