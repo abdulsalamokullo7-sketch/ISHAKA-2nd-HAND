@@ -142,11 +142,6 @@ export function ProductPhotosField({
 
       <p className="text-xs text-isha-text-muted">
         {totalCount} / {maxFiles} photos · On your phone, &quot;Take photo&quot; opens the camera.
-        {onFilesPicked && (
-          <span className="block text-isha-primary/90">
-            New picks upload automatically — use Publish / Save to write the listing to Firestore.
-          </span>
-        )}
       </p>
 
       {(remoteUrls.length > 0 || previewUrls.length > 0) && (

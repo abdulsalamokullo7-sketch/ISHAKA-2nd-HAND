@@ -40,7 +40,6 @@ export function InventoryPanel() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Item | null>(null);
   const [busy, setBusy] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [form, setForm] = useState<{
     name: string;
     price: string;
@@ -66,7 +65,8 @@ export function InventoryPanel() {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [cloudImageUrls, setCloudImageUrls] = useState<string[]>([]);
-  const [photoUploadBusy, setPhotoUploadBusy] = useState(false);
+  /** Non-null only while gallery/camera picks are uploading to storage. */
+  const [photoPickStatus, setPhotoPickStatus] = useState<string | null>(null);
   const draftStorageIdRef = useRef<string | null>(null);
   const [studentIdFile, setStudentIdFile] = useState<File | null>(null);
 
@@ -133,8 +133,7 @@ export function InventoryPanel() {
     const storageItemId =
       editing?.id ??
       (draftStorageIdRef.current ??= crypto.randomUUID());
-    setPhotoUploadBusy(true);
-    setUploadStatus(
+    setPhotoPickStatus(
       added.length === 1
         ? "Uploading photo…"
         : `Uploading ${added.length} photos…`,
@@ -142,28 +141,22 @@ export function InventoryPanel() {
     try {
       const urls = await uploadMany(`items/${storageItemId}`, added, {
         onProgress: ({ completed, total, label }) => {
-          setUploadStatus(
+          if (total <= 1) return;
+          setPhotoPickStatus(
             completed === 0
-              ? `Uploading ${total} photo${total === 1 ? "" : "s"}…`
-              : `Uploaded ${completed}/${total} — ${label}`,
+              ? `Uploading ${total} photos…`
+              : `Uploading ${completed}/${total} — ${label}`,
           );
         },
       });
       setCloudImageUrls((prev) => [...prev, ...urls]);
       setFiles((f) => f.filter((x) => !added.includes(x)));
-      toast(
-        urls.length === 1
-          ? "Photo uploaded to storage."
-          : `${urls.length} photos uploaded to storage.`,
-        "success",
-      );
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Photo upload failed. Try again.";
       toast(msg, "error");
     } finally {
-      setPhotoUploadBusy(false);
-      setUploadStatus(null);
+      setPhotoPickStatus(null);
     }
   }
 
@@ -177,7 +170,6 @@ export function InventoryPanel() {
     if (submitLock.current) return;
     submitLock.current = true;
     setBusy(true);
-    setUploadStatus(null);
     try {
       const base: ItemInput = {
         name: form.name.trim(),
@@ -194,7 +186,6 @@ export function InventoryPanel() {
         studentIdImage: editing?.studentIdImage ?? null,
         status: editing?.status ?? "available",
       };
-      setUploadStatus("Saving item…");
       let id: string;
       let imageUrls: string[] = [...cloudImageUrls];
 
@@ -208,15 +199,7 @@ export function InventoryPanel() {
       }
 
       if (files.length > 0) {
-        const urls = await uploadMany(`items/${id}`, files, {
-          onProgress: ({ completed, total, label }) => {
-            setUploadStatus(
-              completed === 0
-                ? `Uploading ${total} photo${total === 1 ? "" : "s"}…`
-                : `Uploaded ${completed}/${total} — ${label}`,
-            );
-          },
-        });
+        const urls = await uploadMany(`items/${id}`, files);
         imageUrls = [...imageUrls, ...urls];
       }
 
@@ -225,33 +208,18 @@ export function InventoryPanel() {
         images: imageUrls.map((u) => u.trim()).filter(Boolean),
       });
       if (studentIdFile) {
-        setUploadStatus("Uploading student ID…");
         const sid = await uploadMany(`items/${id}/student-id`, [studentIdFile]);
         await updateItem(id, { studentIdImage: sid[0] ?? null });
       }
       fillFromItem(null);
       await load();
-      const parts: string[] = [];
-      if (imageUrls.length)
-        parts.push(
-          `${imageUrls.length} listing photo${imageUrls.length === 1 ? "" : "s"}`,
-        );
-      if (studentIdFile) parts.push("student ID");
-      toast(
-        parts.length
-          ? `Saved — ${parts.join(" & ")} uploaded.`
-          : "Item saved.",
-        "success",
-      );
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Save or upload failed. Try again.";
       toast(msg, "error");
-      setUploadStatus(null);
     } finally {
       submitLock.current = false;
       setBusy(false);
-      setUploadStatus(null);
     }
   }
 
@@ -456,10 +424,19 @@ export function InventoryPanel() {
               onFilesPicked={handleProductPhotosPicked}
               hint={
                 editing && cloudImageUrls.length > 0
-                  ? "Green “up” = already in cloud. New picks upload right away; Publish / Save still updates the listing in Firestore."
-                  : "Take several angles: overall, labels, wear or damage. Shots upload as soon as you pick them."
+                  ? "Green “up” = already saved to storage. New picks show Uploading, then use Publish / Save once."
+                  : "Pick photos from camera or gallery — you’ll see Uploading while they send. Then Publish item once to save the listing."
               }
             />
+            {photoPickStatus && (
+              <p
+                className="mt-2 rounded-lg bg-isha-primary/10 px-3 py-2 text-sm font-semibold text-isha-primary ring-1 ring-isha-primary/20"
+                role="status"
+                aria-live="polite"
+              >
+                {photoPickStatus}
+              </p>
+            )}
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950 ring-1 ring-amber-100">
               <span className="font-bold">Firestore:</span> After you click{" "}
               <strong>Publish item</strong> or <strong>Save changes</strong>, open{" "}
@@ -478,26 +455,14 @@ export function InventoryPanel() {
             />
           </div>
         </div>
-        {(busy || photoUploadBusy) && uploadStatus && (
-          <p
-            className="mt-4 rounded-xl bg-isha-primary/10 px-4 py-3 text-sm font-semibold text-isha-primary ring-1 ring-isha-primary/20"
-            role="status"
-            aria-live="polite"
-          >
-            {uploadStatus}
-          </p>
-        )}
         <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="submit"
-            disabled={busy || photoUploadBusy}
+            disabled={busy || photoPickStatus !== null}
             className={`${btnPrimary} disabled:opacity-60`}
+            aria-busy={busy || photoPickStatus !== null}
           >
-            {busy
-              ? uploadStatus ?? "Working…"
-              : editing
-                ? "Save changes"
-                : "Publish item"}
+            {editing ? "Save changes" : "Publish item"}
           </button>
           {editing && (
             <button
