@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   type DocumentData,
 } from "firebase/firestore";
-import { getFirebaseDb } from "./client";
+import { getFirebaseAuth, getFirebaseDb } from "./client";
 import type { ItemBuyerMessage } from "@/lib/types";
 import { ensureUploadAuth } from "./anonymous";
 
@@ -33,6 +33,13 @@ export async function submitItemBuyerMessage(input: {
   message: string;
 }): Promise<void> {
   await ensureUploadAuth();
+  const auth = getFirebaseAuth();
+  await auth.authStateReady();
+  if (!auth.currentUser) {
+    throw new Error(
+      "Could not start a browser session. Enable Anonymous sign-in in Firebase Console → Authentication → Sign-in method.",
+    );
+  }
   const db = getFirebaseDb();
   const msg = input.message.trim();
   const name = input.buyerName.trim();

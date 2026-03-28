@@ -21,11 +21,9 @@ service cloud.firestore {
     }
 
     match /itemBuyerMessages/{msgId} {
-      // Buyers: anonymous or signed-in can leave a message about a product.
+      // Buyers: anonymous or signed-in can leave a message (same auth model as sellRequests).
+      // Avoid keys().hasAll() — it can fail oddly with serverTimestamp() on some clients.
       allow create: if request.auth != null
-        && request.resource.data.keys().hasAll(
-          ['itemId', 'itemName', 'buyerName', 'buyerPhone', 'message']
-        )
         && request.resource.data.itemId is string
         && request.resource.data.itemName is string
         && request.resource.data.buyerName is string
@@ -33,8 +31,10 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() <= 4000
+        && request.resource.data.buyerName.size() > 0
         && request.resource.data.buyerName.size() <= 200
-        && request.resource.data.buyerPhone.size() <= 40;
+        && request.resource.data.buyerPhone.size() > 0
+        && request.resource.data.buyerPhone.size() <= 48;
       allow read, update, delete: if isShopAccount();
     }
 

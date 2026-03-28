@@ -14,6 +14,7 @@ import {
   telUrl,
 } from "@/lib/constants";
 import { hasFirebaseConfig } from "@/lib/firebase/env";
+import { buildListingWhatsAppText } from "@/lib/listingWhatsAppMessage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { ItemBuyerMessageForm } from "./ItemBuyerMessageForm";
@@ -29,7 +30,12 @@ export function ItemDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [siteOrigin, setSiteOrigin] = useState("");
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSiteOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!hasFirebaseConfig()) {
@@ -100,7 +106,9 @@ export function ItemDetail({ id }: { id: string }) {
   }
 
   const phone = item.phone ?? process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? "";
-  const waMessage = `Hi, I saw "${item.name}" on ${APP_NAME}. Is it still available?`;
+  const waMessage = buildListingWhatsAppText(item, {
+    listingPageUrl: siteOrigin ? `${siteOrigin}/item/${id}` : undefined,
+  });
   const hasPhone = phone.length > 0;
   const wa = hasPhone ? whatsappUrl(phone, waMessage) : "#";
   const call = hasPhone ? telUrl(phone) : "#";

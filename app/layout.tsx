@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { PwaClient } from "@/components/pwa/PwaClient";
 import { APP_NAME } from "@/lib/constants";
 
@@ -66,6 +67,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <SiteHeader />
+          <OfflineBanner />
           <main id="main-content" className="flex-1 outline-none" tabIndex={-1}>
             {children}
           </main>

@@ -7,6 +7,7 @@ import { fetchItemById } from "@/lib/firebase/items";
 import type { Item } from "@/lib/types";
 import { formatUGX, whatsappUrl, telUrl, APP_NAME } from "@/lib/constants";
 import { hasFirebaseConfig } from "@/lib/firebase/env";
+import { buildListingWhatsAppText } from "@/lib/listingWhatsAppMessage";
 import { useCart } from "@/contexts/CartContext";
 
 export default function CartPage() {
@@ -14,6 +15,11 @@ export default function CartPage() {
   const [byId, setById] = useState<Record<string, Item | null>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [siteOrigin, setSiteOrigin] = useState("");
+
+  useEffect(() => {
+    setSiteOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!hasFirebaseConfig()) {
@@ -152,7 +158,12 @@ export default function CartPage() {
                             <a
                               href={whatsappUrl(
                                 item.phone,
-                                `Hi, I want to buy "${item.name}" from my ${APP_NAME} cart.`,
+                                buildListingWhatsAppText(item, {
+                                  introLine: `Hi! I'm interested in this item from my ${APP_NAME} cart.`,
+                                  listingPageUrl: siteOrigin
+                                    ? `${siteOrigin}/item/${item.id}`
+                                    : undefined,
+                                }),
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
