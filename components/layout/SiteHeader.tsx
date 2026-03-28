@@ -12,7 +12,7 @@ export function SiteHeader() {
           >
             IS
           </span>
-          <span className="hidden text-base font-extrabold tracking-tight text-isha-text sm:block sm:text-lg">
+          <span className="text-sm font-extrabold tracking-tight text-isha-text sm:text-lg">
             Ishaka Market
           </span>
         </Link>

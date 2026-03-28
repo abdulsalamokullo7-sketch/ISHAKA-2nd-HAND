@@ -9,11 +9,10 @@ const TABS: readonly {
   label: string;
   icon: (p: { active?: boolean }) => React.JSX.Element;
   badge?: boolean;
-  center?: boolean;
 }[] = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/favorites", label: "Saved", icon: HeartIcon, badge: true },
-  { href: "/sell", label: "Sell", icon: PlusIcon, center: true },
+  { href: "/sell", label: "Sell", icon: PlusIcon },
   { href: "/about", label: "About", icon: InfoIcon },
   { href: "/admin", label: "Admin", icon: LockIcon },
 ];
@@ -22,8 +21,6 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { count, ready } = useFavorites();
 
-  if (pathname.startsWith("/admin")) return null;
-
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
@@ -31,47 +28,34 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 md:hidden"
-      aria-label="Bottom navigation"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-isha-border/80 bg-white/95 backdrop-blur-lg md:hidden"
+      aria-label="Main navigation"
     >
-      <div className="mx-2 mb-[env(safe-area-inset-bottom,6px)] rounded-2xl border border-isha-border/60 bg-white/95 shadow-lg backdrop-blur-lg">
-        <div className="flex items-center justify-around px-1 py-1">
-          {TABS.map((tab) => {
-            const active = isActive(tab.href);
-            const Icon = tab.icon;
-
-            if (tab.center) {
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className="relative -mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-isha-primary to-emerald-700 text-white shadow-lg ring-4 ring-white transition active:scale-90"
-                  aria-label={tab.label}
-                >
-                  <Icon active />
-                </Link>
-              );
-            }
-
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] font-semibold transition active:scale-95 ${
-                  active ? "text-isha-primary" : "text-gray-400"
-                }`}
-              >
-                <Icon active={active} />
-                <span>{tab.label}</span>
-                {tab.badge && ready && count > 0 && (
-                  <span className="absolute right-1 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-isha-primary text-[8px] font-extrabold text-white">
-                    {count > 9 ? "9+" : count}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+      <div className="flex items-stretch justify-around pb-[env(safe-area-inset-bottom,4px)]">
+        {TABS.map((tab) => {
+          const active = isActive(tab.href);
+          const Icon = tab.icon;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`relative flex flex-1 flex-col items-center gap-0.5 pt-2 pb-1.5 text-[10px] font-semibold transition active:opacity-70 ${
+                active ? "text-isha-primary" : "text-gray-400"
+              }`}
+            >
+              {active && (
+                <span className="absolute inset-x-3 top-0 h-[2.5px] rounded-full bg-isha-primary" />
+              )}
+              <Icon active={active} />
+              <span>{tab.label}</span>
+              {tab.badge && ready && count > 0 && (
+                <span className="absolute right-[calc(50%-14px)] top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-isha-primary text-[8px] font-extrabold text-white ring-1 ring-white">
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
@@ -101,10 +85,14 @@ function HeartIcon({ active }: { active?: boolean }) {
   );
 }
 
-function PlusIcon() {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+function PlusIcon({ active }: { active?: boolean }) {
+  return active ? (
+    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clipRule="evenodd" />
+    </svg>
+  ) : (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
