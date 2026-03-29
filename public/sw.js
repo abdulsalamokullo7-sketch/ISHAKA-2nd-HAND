@@ -1,8 +1,9 @@
 /**
- * Offline-friendly service worker: caches pages & static assets after first visit.
- * API routes stay network-only. Bump CACHE_NAME when changing strategies.
+ * Offline-friendly SW: HTML/RSC network-first with cache fallback; all other
+ * same-origin GET (/_next/*, etc.) stale-while-revalidate.
+ * Bump CACHE_NAME after logic changes.
  */
-const CACHE_NAME = "ishaka-offline-v2";
+const CACHE_NAME = "ishaka-offline-v3";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -37,7 +38,7 @@ async function networkFirstDocument(request, cache) {
     const home = await cache.match(new Request(self.location.origin + "/"));
     if (home) return home;
     return new Response(
-      "You are offline. Open this app online once, then you can browse cached pages.",
+      "You are offline. Open this app online once, then browse — pages and listings are saved for next time.",
       {
         status: 503,
         statusText: "Offline",
@@ -77,12 +78,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   const accept = req.headers.get("accept") || "";
-  const isDoc =
+  const isNavigationLike =
     req.mode === "navigate" ||
     accept.includes("text/html") ||
     url.searchParams.has("_rsc");
 
-  if (isDoc) {
+  if (isNavigationLike) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
@@ -92,31 +93,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_NAME);
-        return staleWhileRevalidate(req, cache);
-      })(),
-    );
-    return;
-  }
-
-  if (
-    url.pathname.startsWith("/icon") ||
-    url.pathname === "/manifest.webmanifest" ||
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".ico") ||
-    url.pathname.endsWith(".webmanifest")
-  ) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_NAME);
-        return staleWhileRevalidate(req, cache);
-      })(),
-    );
-    return;
-  }
-
-  event.respondWith(fetch(req));
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      return staleWhileRevalidate(req, cache);
+    })(),
+  );
 });
